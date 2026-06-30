@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GAS calc</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #f5f4f0;
+    --surface: #ffffff;
+    --surface-low: #eeedea;
+    --text: #1a1a18;
+    --text-muted: #7a7972;
+    --border: #dddbd5;
+    --green: #1D9E75;
+    --amber: #EF9F27;
+    --red: #E24B4A;
+    --accent: #2563eb;
+    --radius: 10px;
+  }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    padding: 2rem 1rem;
+  }
+
+  .card {
+    background: var(--surface);
+    border-radius: 16px;
+    border: 1px solid var(--border);
+    padding: 2rem;
+    width: 100%;
+    max-width: 480px;
+  }
+
+  h1 {
+    font-size: 18px;
+    font-weight: 600;
+    margin-bottom: 0.25rem;
+    letter-spacing: -0.01em;
+  }
+
+  .subtitle {
+    font-size: 13px;
+    color: var(--text-muted);
+    margin-bottom: 1.75rem;
+  }
+
+  .field-group {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+  }
+
+  .field {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+  }
+
+  label {
+    font-size: 13px;
+    color: var(--text-muted);
+    font-weight: 500;
+  }
+
+  select, input[type="number"] {
+    appearance: none;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 0.6rem 0.85rem;
+    font-size: 15px;
+    color: var(--text);
+    width: 100%;
+    font-family: inherit;
+    transition: border-color 0.15s;
+    outline: none;
+  }
+
+  select {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%237a7972' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 12px center;
+    padding-right: 2.5rem;
+    cursor: pointer;
+  }
+
+  select:focus, input[type="number"]:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+  }
+
+  input[type="number"]::-webkit-inner-spin-button { display: none; }
+
+  .divider {
+    border: none;
+    border-top: 1px solid var(--border);
+    margin: 1.5rem 0;
+  }
+
+  .result-header {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    margin-bottom: 0.75rem;
+  }
+
+  .pct-big {
+    font-size: 42px;
+    font-weight: 700;
+    letter-spacing: -0.03em;
+    line-height: 1;
+    transition: color 0.3s;
+  }
+
+  .zbytek-label {
+    font-size: 13px;
+    color: var(--text-muted);
+    text-align: right;
+  }
+
+  .bar-wrap {
+    background: var(--surface-low);
+    border-radius: 999px;
+    height: 10px;
+    overflow: hidden;
+    margin-bottom: 1.25rem;
+  }
+
+  .bar {
+    height: 100%;
+    border-radius: 999px;
+    transition: width 0.35s ease, background-color 0.35s ease;
+  }
+
+  .stats-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+  }
+
+  .stat {
+    background: var(--surface-low);
+    border-radius: var(--radius);
+    padding: 0.9rem 1rem;
+  }
+
+  .stat-val {
+    font-size: 22px;
+    font-weight: 600;
+    letter-spacing: -0.02em;
+    margin-bottom: 3px;
+  }
+
+  .stat-lbl {
+    font-size: 12px;
+    color: var(--text-muted);
+    line-height: 1.3;
+  }
+
+  .warning {
+    display: none;
+    background: #fff8ed;
+    border: 1px solid #fcd57a;
+    border-radius: var(--radius);
+    padding: 0.75rem 1rem;
+    font-size: 13px;
+    color: #7a4f00;
+    margin-top: 1rem;
+  }
+
+  .warning.show { display: block; }
+
+  footer {
+    margin-top: 1rem;
+    font-size: 11px;
+    color: var(--text-muted);
+    line-height: 1.5;
+  }
+
+  @media (max-width: 420px) {
+    .card { padding: 1.5rem 1.25rem; }
+    .pct-big { font-size: 34px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="card">
+  <h1>GAS calc</h1>
+  <p class="subtitle">Výpočet zbytku plynu v lahvi</p>
+
+  <div class="field-group">
+    <div class="field">
+      <label for="lahev">Velikost láhve</label>
+      <select id="lahev">
+        <option value="2">2 kg</option>
+        <option value="5">5 kg</option>
+        <option value="10">10 kg</option>
+      </select>
+    </div>
+
+    <div class="field">
+      <label for="tara">Váha prázdné láhve – tara (kg)</label>
+      <input type="number" id="tara" value="1.1" step="0.1" min="0" />
+    </div>
+
+    <div class="field">
+      <label for="current">Aktuální váha láhve (kg)</label>
+      <input type="number" id="current" value="2.5" step="0.1" min="0" />
+    </div>
+  </div>
+
+  <hr class="divider" />
+
+  <div class="result-header">
+    <div class="pct-big" id="pct-big">—</div>
+    <div class="zbytek-label" id="zbytek-label">—</div>
+  </div>
+
+  <div class="bar-wrap">
+    <div class="bar" id="bar" style="width: 0%"></div>
+  </div>
+
+  <div class="stats-grid">
+    <div class="stat">
+      <div class="stat-val" id="sprchy">—</div>
+      <div class="stat-lbl">sprch na osobu zbývá<br>(2 min / sprcha)</div>
+    </div>
+    <div class="stat">
+      <div class="stat-val" id="vareni">—</div>
+      <div class="stat-lbl">hodin vaření<br>(1 hořák)</div>
+    </div>
+    <div class="stat">
+      <div class="stat-val" id="zbytek-kg">—</div>
+      <div class="stat-lbl">kg plynu zbývá</div>
+    </div>
+  </div>
+
+  <div class="warning" id="warning">
+    Méně než 20 % – doplnit nebo vyměnit láhev.
+  </div>
+
+  <footer>
+    Výpočty: ohřívač 12 kW (0,94 kg/hod), vařič 1 hořák (0,13 kg/hod).
+  </footer>
+</div>
+
+<script>
+  const SPOTREBA_OHRIVAC = 0.94; // kg/hod
+  const SPOTREBA_VARIC = 0.13;    // kg/hod
+  const MINUTY_SPRCHY = 2;
+
+  // Specifické váhy prázdných lahví (2kg nastavena na 4.05 kg)
+  const taraDefaults = { 2: 4.05, 5: 5.7, 10: 10.0 };
+
+  function update() {
+    const lahevKg = parseFloat(document.getElementById('lahev').value);
+    const tara = parseFloat(document.getElementById('tara').value) || 0;
+    const current = parseFloat(document.getElementById('current').value) || 0;
+
+    // Výpočet čistého zbytku plynu
+    const zbytek = Math.max(0, current - tara);
+    
+    // Procenta z kapacity lahve
+    const pct = lahevKg > 0 ? Math.min(100, Math.max(0, (zbytek / lahevKg) * 100)) : 0;
+
+    const barColor = pct > 40 ? '#1D9E75' : pct > 15 ? '#EF9F27' : '#E24B4A';
+    const pctColor = pct > 40 ? '#1D9E75' : pct > 15 ? '#c47d10' : '#E24B4A';
+
+    document.getElementById('bar').style.width = pct.toFixed(1) + '%';
+    document.getElementById('bar').style.backgroundColor = barColor;
+    document.getElementById('pct-big').textContent = Math.round(pct) + ' %';
+    document.getElementById('pct-big').style.color = pctColor;
+    document.getElementById('zbytek-label').textContent = zbytek.toFixed(2) + ' kg z ' + lahevKg + ' kg';
+
+    // Výpočet sprch pro 1 osobu
+    const sprcha_kg_osoba = (SPOTREBA_OHRIVAC * MINUTY_SPRCHY) / 60;
+    const sprch = zbytek > 0 ? Math.floor(zbytek / sprcha_kg_osoba) : 0;
+    
+    // Hodiny vaření
+    const vareniHod = zbytek > 0 ? (zbytek / SPOTREBA_VARIC).toFixed(1) : '0';
+
+    document.getElementById('sprchy').textContent = sprch;
+    document.getElementById('vareni').textContent = vareniHod + ' h';
+    document.getElementById('zbytek-kg').textContent = zbytek.toFixed(2) + ' kg';
+
+    document.getElementById('warning').classList.toggle('show', pct > 0 && pct < 20);
+  }
+
+  // Při změně velikosti lahve aktualizujeme táru i aktuální váhu (přednastavíme plnou láhev)
+  document.getElementById('lahev').addEventListener('change', function () {
+    const novaTara = taraDefaults[this.value] || 4.05;
+    const kapacita = parseFloat(this.value);
+    
+    document.getElementById('tara').value = novaTara;
+    document.getElementById('current').value = (novaTara + kapacita).toFixed(1);
+    update();
+  });
+
+  document.getElementById('tara').addEventListener('input', update);
+  document.getElementById('current').addEventListener('input', update);
+
+  // Inicializace výchozího stavu při načtení (pro 2kg lahev)
+  document.getElementById('tara').value = taraDefaults[2];
+  document.getElementById('current').value = (taraDefaults[2] + 2).toFixed(1);
+
+  update();
+</script>
+
+</body>
+</html>
